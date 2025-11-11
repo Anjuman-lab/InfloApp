@@ -10,16 +10,27 @@ public class UsersController : Controller
     private readonly IUserService _userService;
     public UsersController(IUserService userService) => _userService = userService;
 
+
+    /// <summary>
+    /// Optional query param "isActive" filters active/inactive users.
+    /// </summary>
+    /// <param name="isActive">If null => show all, otherwise filter by active state</param>
+    /// <returns>List of the users.</returns>
     [HttpGet]
-    public ViewResult List()
+    public ViewResult List([FromQuery] bool? isActive)
     {
-        var items = _userService.GetAll().Select(p => new UserListItemViewModel
+        var users = isActive.HasValue
+        ? _userService.FilterByActive(isActive.Value)
+        : _userService.GetAll();
+
+        var items = users.Select(p => new UserListItemViewModel
         {
             Id = p.Id,
             Forename = p.Forename,
             Surname = p.Surname,
             Email = p.Email,
-            IsActive = p.IsActive
+            IsActive = p.IsActive,
+            DateOfBirth = p.DateOfBirth
         });
 
         var model = new UserListViewModel
