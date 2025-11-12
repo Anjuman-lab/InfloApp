@@ -1,22 +1,79 @@
-html {
-  font-size: 14px;
+/* ========= GLOBAL ========== */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f6f8; /* Gray dashboard bg */
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+/* ========= LAYOUT ========== */
+.layout-container {
+    display: flex;
+    min-height: 100vh;
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+/* Sidebar (white) */
+.sidebar {
+    width: 260px;
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
 }
 
-html {
-  position: relative;
-  min-height: 100%;
+/* Brand section */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #0F8B8D;
 }
 
-body {
-  margin-bottom: 60px;
+    .brand .avatar {
+        background-color: #0F8B8D;
+        color: #fff;
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 0.4rem 0.7rem;
+    }
+
+/* Sidebar nav links */
+.sidebar .nav-link {
+    color: #374151;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: all 0.2s ease-in-out;
+}
+
+    .sidebar .nav-link i {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
+    /* Hover & Active */
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active {
+        background-color: #D7F7F9;
+        color: #0F8B8D;
+    }
+
+        .sidebar .nav-link:hover i,
+        .sidebar .nav-link.active i {
+            color: #0F8B8D;
+        }
+
+/* ========= MAIN CONTENT ========== */
+.main-content {
+    flex-grow: 1;
+    padding: 2rem 3rem;
+    background-color: #f5f6f8;
+    overflow-y: auto;
 }
