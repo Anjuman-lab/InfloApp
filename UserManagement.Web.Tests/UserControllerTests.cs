@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using UserManagement.Models;
 using UserManagement.Services.Domain.Interfaces;
+using UserManagement.Web.Controllers;
 using UserManagement.Web.Models.Users;
-using UserManagement.WebMS.Controllers;
 
 namespace UserManagement.Data.Tests;
 
@@ -21,55 +22,76 @@ public class UsersControllerTests
     }
 
     [Test]
-    public void List_ShowAll_UsesGetAllAndReturnsAll()
+    public void List_ShowAll_UsesGetAllWithNullAndReturnsAll()
     {
-        var all = StubUsers(true, false, true); // 3 users
-        _userService.Setup(s => s.GetAll()).Returns(all);
+        // Arrange
+        var all = StubUsers(true, false, true).ToList();
 
-        var result = _controller.List(null);
+        _userService
+            .Setup(s => s.GetAllAsync(null))
+            .ReturnsAsync(all);
 
-        result.Should().BeOfType<ViewResult>()
-            .Which.Model.Should().BeOfType<UserListViewModel>()
-            .Which.Items.Should().HaveCount(all.Length); // ✅ expect 3
+        // Act
+        var result = _controller.List(null).Result;
+
+        // Assert
+        var view = result as ViewResult;
+        Assert.That(view, Is.Not.Null);
+
+        var model = view!.Model as UserListViewModel;
+        Assert.That(model, Is.Not.Null);
+
+        Assert.That(model!.Items.Count, Is.EqualTo(all.Count));
     }
 
 
     [Test]
-    public void List_WithIsActiveTrue_ShouldUseFilterAndReturnOnlyActiveUsers()
+    public void List_WithIsActiveTrue_ShouldReturnOnlyActiveUsers()
     {
-        // Arrange (Active Only)
-        var activeUsers = StubUsers(true);
-        SetupFilterByActive(true, activeUsers);
+        // Arrange
+        var active = StubUsers(true).ToList();
+
+        _userService.Setup(s => s.GetAllAsync(true)).ReturnsAsync(active);
+
 
         // Act
-        var result = _controller.List(isActive: true);
+        var result = _controller.List(true).Result;
 
         // Assert
-        result.Should().BeOfType<ViewResult>()
-            .Which.Model.Should().BeOfType<UserListViewModel>()
-            .Which.Items.Should().HaveCount(1)
-            .And.OnlyContain(i => i.IsActive);
+        var view = result as ViewResult;
+        Assert.That(view, Is.Not.Null);
+
+        var model = view!.Model as UserListViewModel;
+        Assert.That(model, Is.Not.Null);
+
+        Assert.That(model!.Items.Count, Is.EqualTo(1));
+        Assert.That(model!.Items.TrueForAll(i => i.IsActive), Is.True);
     }
 
     [Test]
-    public void List_WithIsActiveFalse_ShouldUseFilterAndReturnOnlyInactiveUsers()
+    public void List_WithIsActiveFalse_ShouldReturnOnlyInactiveUsers()
     {
-        // Arrange (Non Active)
-        var inactives = StubUsers(false);
-        SetupFilterByActive(false, inactives);
+        // Arrange
+        var inactive = StubUsers(false).ToList();
+
+        _userService.Setup(s => s.GetAllAsync(false)).ReturnsAsync(inactive);
+
 
         // Act
-        var result = _controller.List(isActive: false);
+        var result = _controller.List(false).Result;
 
         // Assert
-        result.Should().BeOfType<ViewResult>()
-            .Which.Model.Should().BeOfType<UserListViewModel>()
-            .Which.Items.Should().HaveCount(1)
-            .And.OnlyContain(i => !i.IsActive);
+        var view = result as ViewResult;
+        Assert.That(view, Is.Not.Null);
+
+        var model = view!.Model as UserListViewModel;
+        Assert.That(model, Is.Not.Null);
+
+        Assert.That(model!.Items.Count, Is.EqualTo(1));
+        Assert.That(model!.Items.TrueForAll(i => !i.IsActive), Is.True);
     }
 
     // ---------- helpers ----------
-
     private static User[] StubUsers(params bool[] actives)
     {
         var list = new List<User>();
@@ -86,11 +108,6 @@ public class UsersControllerTests
         }
         return list.ToArray();
     }
-
-    private void SetupGetAll(User[] users)
-        => _userService.Setup(s => s.GetAll()).Returns(users);
-
-    private void SetupFilterByActive(bool isActive, User[] users)
-        => _userService.Setup(s => s.FilterByActive(isActive)).Returns(users);
 }
+
 

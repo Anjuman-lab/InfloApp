@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using UserManagement.Models;
 
@@ -8,15 +7,30 @@ namespace UserManagement.Services.Domain.Interfaces;
 public interface IUserService 
 {
     /// <summary>
-    /// Return users by active state
+    /// Filters by active state when param is supplied.
     /// </summary>
     /// <param name="isActive"></param>
-    /// <returns></returns>
-    IEnumerable<User> FilterByActive(bool isActive);
-    IEnumerable<User> GetAll();
+    /// <returns>All users</returns>
+    Task<List<User>> GetAllAsync(bool? isActive = null);
 
+    /// <summary>
+    /// Returns a single user by id, or null if not found.
+    /// </summary>
+    Task<User?> GetByIdAsync(long id);
 
-    //New async methods (preferred going forward)
-    Task<List<User>> GetAllAsync(CancellationToken ct = default);
-    Task<List<User>> FilterByActiveAsync(bool isActive, CancellationToken ct = default);
+    /// <summary>
+    /// Creates a new user and saves it to the database.
+    /// </summary>
+    Task<User> CreateAsync(User user);
+
+    /// <summary>
+    /// Updates an existing user. Returns false if the user does not exist.
+    /// </summary>
+    Task<bool> UpdateAsync(User user);
+
+    /// <summary>
+    /// Deletes a user by id. Returns false if the user does not exist.
+    /// </summary>
+    Task<bool> DeleteAsync(long id);
+
 }

@@ -1,90 +1,97 @@
-﻿@page "/users" 
+﻿@page "/users"
+@inject NavigationManager Nav
 @inject IUserService UserService
 
+<h3>User List</h3>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">User List</h3>
-    <div class="d-flex gap-2">
-        <select class="form-select w-auto border border-primary"
-                @onchange="OnFilterChanged"
-                style="min-width: 130px;">
-            <option value="all" selected>Show All</option>
+    <div>
+        <select class="form-select w-auto d-inline"
+                @onchange="OnFilterChanged">
+            <option value="all">Show All</option>
             <option value="active">Active Only</option>
             <option value="inactive">Inactive Only</option>
         </select>
-        <button class="btn btn-primary">Add User</button>
     </div>
+
+    <button class="btn btn-primary" @onclick="GoToCreate">
+        Add User
+    </button>
 </div>
 
-
-<table class="table table-striped table-bordered">
-    <thead class="table-light">
-        <tr>
-            <th>Id</th>
-            <th>Forename</th>
-            <th>Surname</th>
-            <th>Email</th>
-            <th>Date of Birth</th>
-            <th>Account Active</th>
-            <th style="width:1px;"></th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Filtered is null)
-        {
-            <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-        }
-        else if (Filtered.Count == 0)
-        {
-            <tr><td colspan="7" class="text-center text-muted">No users found.</td></tr>
-        }
-        else
-        {
-            @foreach (var u in Filtered)
+@if (filtered is null || filtered.Count == 0)
+{
+    <div>No users found.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Forename</th>
+                <th>Surname</th>
+                <th>Email</th>
+                <th>Active</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in filtered)
             {
                 <tr>
-                    <td>@u.Id</td>
-                    <td>@u.Forename</td>
-                    <td>@u.Surname</td>
-                    <td>@u.Email</td>
-                    <td>@u.DateOfBirth?.ToString("yyyy-MM-dd")</td>
-                    <td>@(u.IsActive ? "Yes" : "No")</td>
+                    <td>@user.Forename</td>
+                    <td>@user.Surname</td>
+                    <td>@user.Email</td>
+                    <td>@(user.IsActive ? "Yes" : "No")</td>
                     <td>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                Actions
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="/blazor/users/view/@u.Id">View</a></li>
-                                <li><a class="dropdown-item" href="/blazor/users/edit/@u.Id">Edit</a></li>
-                                <li><a class="dropdown-item" href="/blazor/users/delete/@u.Id">Delete</a></li>
-                            </ul>
-                        </div>
+                        <button class="btn btn-sm btn-info"
+                                @onclick="() => GoToView(user.Id)">
+                            View
+                        </button>
+                        <button class="btn btn-sm btn-warning ms-1"
+                                @onclick="() => GoToEdit(user.Id)">
+                            Edit
+                        </button>
+                        <button class="btn btn-sm btn-danger ms-1"
+                                @onclick="() => GoToDelete(user.Id)">
+                            Delete
+                        </button>
                     </td>
                 </tr>
             }
-        }
-    </tbody>
-</table>
+        </tbody>
+    </table>
+}
 
 @code {
     private string filter = "all";
-    private List<User>? all;
-    private List<User> Filtered => filter switch
-    {
-        "active" => all?.Where(x => x.IsActive).ToList() ?? new(),
-        "inactive" => all?.Where(x => !x.IsActive).ToList() ?? new(),
-        _ => all ?? new()
-    };
+    private List<User> all = new();
+    private List<User> filtered = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // Temporary: reuse existing service until we connect real SQL
         all = await UserService.GetAllAsync();
+        ApplyFilter();
     }
 
     private void OnFilterChanged(ChangeEventArgs e)
     {
         filter = e.Value?.ToString() ?? "all";
-        StateHasChanged();
+        ApplyFilter();
     }
+
+    private void ApplyFilter()
+    {
+        filtered = filter switch
+        {
+            "active"   => all.Where(u => u.IsActive).ToList(),
+            "inactive" => all.Where(u => !u.IsActive).ToList(),
+            _          => all.ToList()
+        };
+    }
+
+    private void GoToCreate() => Nav.NavigateTo("/users/create");
+    private void GoToView(long id) => Nav.NavigateTo($"/users/view/{id}");
+    private void GoToEdit(long id) => Nav.NavigateTo($"/users/edit/{id}");
+    private void GoToDelete(long id) => Nav.NavigateTo($"/users/delete/{id}");
 }
