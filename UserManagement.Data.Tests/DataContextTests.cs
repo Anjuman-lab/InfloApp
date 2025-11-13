@@ -3,55 +3,80 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using UserManagement.Models;
 
-namespace UserManagement.Data.Tests;
-
-public class DataContextTests
+namespace UserManagement.Data.Tests
 {
-    [Fact]
-    public void GetAll_WhenNewEntityAdded_MustIncludeNewEntity()
+    public class DataContextTests
     {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var context = CreateContext();
-
-        var entity = new User
+        [Test]
+        public void GetAll_WhenNewEntityAdded_MustIncludeNewEntity()
         {
-            Forename = "Brand New",
-            Surname = "User",
-            Email = "brandnewuser@example.com"
-        };
-        context.Create(entity);
+            // Arrange
+            var context = CreateContext();
 
-        // Act: Invokes the method under test with the arranged parameters.
-        var result = context.GetAll<User>();
+            var entity = new User
+            {
+                Forename = "Brand New",
+                Surname = "User",
+                Email = "brandnewuser@example.com",
+                IsActive = true
+            };
 
-        // Assert: Verifies that the action of the method under test behaves as expected.
-        result
-            .Should().Contain(s => s.Email == entity.Email)
-            .Which.Should().BeEquivalentTo(entity);
+            context.Users.Add(entity);
+            context.SaveChanges();
+
+            // Act
+            var results = context.Users.ToList();
+
+            // Assert
+            var found = results.Any(x => x.Email == entity.Email);
+            Assert.That(found, Is.True, "Newly added entity should appear in GetAll");
+
+            var retrieved = results.First(x => x.Email == entity.Email);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(retrieved.Forename, Is.EqualTo(entity.Forename));
+                Assert.That(retrieved.Surname, Is.EqualTo(entity.Surname));
+                Assert.That(retrieved.Email, Is.EqualTo(entity.Email));
+                Assert.That(retrieved.IsActive, Is.EqualTo(entity.IsActive));
+            });
+        }
+
+        [Test]
+        public void GetAll_WhenDeleted_MustNotIncludeDeletedEntity()
+        {
+            // Arrange
+            var context = CreateContext();
+
+            var entity = new User
+            {
+                Forename = "Test",
+                Surname = "User",
+                Email = "testuser@example.com",
+                IsActive = true
+            };
+
+            context.Users.Add(entity);
+            context.SaveChanges();
+
+            // Act – delete entity
+            context.Users.Remove(entity);
+            context.SaveChanges();
+
+            var results = context.Users.ToList();
+
+            // Assert
+            var found = results.Any(x => x.Email == entity.Email);
+            Assert.That(found, Is.False, "Deleted entity should not appear in GetAll");
+        }
+
+        private DataContext CreateContext()
+        {
+            var options = new DbContextOptionsBuilder<DataContext>()
+                .UseInMemoryDatabase($"Tests_{Guid.NewGuid()}")
+                .Options;
+
+            return new DataContext(options);
+        }
     }
-
-    [Fact]
-    public void GetAll_WhenDeleted_MustNotIncludeDeletedEntity()
-    {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var context = CreateContext();
-        var entity = context.GetAll<User>().First();
-        context.Delete(entity);
-
-        // Act: Invokes the method under test with the arranged parameters.
-        var result = context.GetAll<User>();
-
-        // Assert: Verifies that the action of the method under test behaves as expected.
-        result.Should().NotContain(s => s.Email == entity.Email);
-    }
-
-    private DataContext CreateContext()
-    {
-        var options = new DbContextOptionsBuilder<DataContext>()
-            .UseInMemoryDatabase($"Tests_{Guid.NewGuid()}") // unique name each time
-            .Options;
-
-        return new DataContext(options);
-    }
-
 }

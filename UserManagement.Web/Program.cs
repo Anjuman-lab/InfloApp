@@ -10,35 +10,37 @@ using Westwind.AspNetCore.Markdown;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Read connection string from appsettings.json
-var cs = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// Register EF Core with SQL Server
+// DATABASE
 builder.Services.AddDbContext<DataContext>(options =>
-    options.UseSqlServer(cs));
+{
+    var cs = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseSqlServer(cs);
+});
 
 
-// Register abstractions for DI
+//Expose DbContext through interface
 builder.Services.AddScoped<IDataContext>(sp => sp.GetRequiredService<DataContext>());
+
+// Register abstractions for DI (extension method)
 builder.Services.AddDomainServices();
 
-// UI frameworks
+
+//UI + MVC + HTTP CLIENT
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddControllers();
+
 builder.Services.AddHttpClient("ServerAPI", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["AppBaseUrl"] ?? "https://localhost:7084/");
 });
 builder.Services.AddMarkdown();
 
-
+// BUILD & MIDDLEWARE PIPELINE
 var app = builder.Build();
 
-// Middleware Pipeline
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();

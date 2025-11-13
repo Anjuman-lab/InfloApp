@@ -1,73 +1,87 @@
 ﻿@page "/"
-@page "/home"
+@inject IUserService UserService
+@inject IJSRuntime JS
 
-<h2 class="fw-bold">Dashboard</h2>
-<p class="text-muted mb-4">Welcome to your user management system</p>
+<h2 class="fw-bold mb-1">Dashboard</h2>
+<p class="text-muted mb-4">Overview of your user statistics</p>
 
-<div class="row g-3">
+<div class="row g-4">
+
+    <!-- TOTAL USERS -->
     <div class="col-md-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h6 class="text-uppercase text-secondary mb-2">Total Users</h6>
-                <h3 class="fw-bold">248</h3>
-                <small class="text-success">+12% from last month</small>
+        <div class="card shadow-sm p-3 border-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="text-uppercase text-muted fw-bold">Total Users</h6>
+                <span class="material-icons-outlined text-primary fs-1">group</span>
             </div>
+            <h3 class="fw-bold">@TotalUsers</h3>
         </div>
     </div>
+
+    <!-- ACTIVE USERS -->
     <div class="col-md-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h6 class="text-uppercase text-secondary mb-2">Active Users</h6>
-                <h3 class="fw-bold">186</h3>
-                <small class="text-success">+8% from last month</small>
+        <div class="card shadow-sm p-3 border-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="text-uppercase text-muted fw-bold">Active Users</h6>
+                <span class="material-icons-outlined text-success fs-1">person</span>
             </div>
+            <h3 class="fw-bold">@ActiveUsers</h3>
         </div>
     </div>
+
+    <!-- NEW USERS -->
     <div class="col-md-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h6 class="text-uppercase text-secondary mb-2">New Users</h6>
-                <h3 class="fw-bold">42</h3>
-                <small class="text-warning">This month</small>
+        <div class="card shadow-sm p-3 border-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="text-uppercase text-muted fw-bold">New Users</h6>
+                <span class="material-icons-outlined text-warning fs-1">person_add</span>
             </div>
+            <h3 class="fw-bold">0</h3>
         </div>
     </div>
+
+    <!-- INACTIVE USERS -->
     <div class="col-md-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h6 class="text-uppercase text-secondary mb-2">Inactive Users</h6>
-                <h3 class="fw-bold">62</h3>
-                <small class="text-danger">–3% from last month</small>
+        <div class="card shadow-sm p-3 border-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="text-uppercase text-muted fw-bold">Inactive Users</h6>
+                <span class="material-icons-outlined text-danger fs-1">person_off</span>
             </div>
+            <h3 class="fw-bold">@InactiveUsers</h3>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mt-4">
+<!-- QUICK ACTIONS -->
+<div class="row mt-4">
     <div class="col-md-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <h5 class="fw-bold mb-3">Quick Actions</h5>
-                <ul class="list-unstyled">
-                    <li>• Add new users</li>
-                    <li>• View & edit user details</li>
-                    <li>• Manage roles & permissions</li>
-                    <li>• Monitor active/inactive users</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <h5 class="fw-bold mb-3">Recent Activity</h5>
-                <ul class="list-unstyled">
-                    <li><span class="text-success">5</span> new users added today</li>
-                    <li><span class="text-primary">12</span> role updates this week</li>
-                    <li><span class="text-warning">3</span> users pending activation</li>
-                </ul>
-            </div>
+        <div class="card shadow-sm p-4 border-0">
+            <h4 class="fw-bold mb-3">Quick Actions</h4>
+            <p>Use the User Management section to:</p>
+            <ul>
+                <li>Add new users to your system</li>
+                <li>View and edit user details</li>
+                <li>Manage user roles & permissions</li>
+                <li>Monitor active and inactive users</li>
+            </ul>
         </div>
     </div>
 </div>
+
+@code {
+    public int TotalUsers { get; set; }
+    public int ActiveUsers { get; set; }
+    public int InactiveUsers { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var all = await UserService.GetAllAsync();
+        var active = await UserService.GetAllAsync(true);
+        var inactive = await UserService.GetAllAsync(false);
+
+        TotalUsers = all.Count;
+        ActiveUsers = active.Count;
+        InactiveUsers = inactive.Count;
+    }
+
+}
