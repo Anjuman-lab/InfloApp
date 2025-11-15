@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using UserManagement.Models;
 using Microsoft.AspNetCore.Builder;        
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -53,5 +55,15 @@ app.MapRazorPages();
 app.MapBlazorHub();       
 app.MapFallbackToPage("/_Host"); // ⬅ fallback to Blazor at root
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+
+    // Apply migrations
+    db.Database.Migrate();
+
+    // Run seed
+    DbSeeder.Seed(db);
+}
 
 app.Run();

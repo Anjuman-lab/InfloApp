@@ -14,10 +14,12 @@ namespace UserManagement.Services.Domain.Implementations;
 public class UserService : IUserService
 {
     private readonly IDataContext _context;
+    private readonly IActivityLogService _activityLogService;
 
-    public UserService(IDataContext context)
+    public UserService(IDataContext context, IActivityLogService activityLogService)
     {
         _context = context;
+        _activityLogService = activityLogService;
     }
 
     /// <inheritdoc />
@@ -54,6 +56,16 @@ public class UserService : IUserService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
+        //Log activity
+        await _activityLogService.AddAsync(new ActivityLog
+        {
+            Action = "User Created",
+            UserId = user.Id,
+            UserName = $"{user.Forename} {user.Surname}",
+            PerformedBy = "System", // later you could plug in real username
+            Details = $"Created user account for {user.Forename} {user.Surname}"
+        });
+
         return user;
     }
 
@@ -74,10 +86,20 @@ public class UserService : IUserService
         existing.DateOfBirth = user.DateOfBirth;
 
         await _context.SaveChangesAsync();
+
+        //Log activity 
+        await _activityLogService.AddAsync(new ActivityLog
+        {
+            Action = "User Updated",
+            UserId = existing.Id,
+            UserName = $"{existing.Forename} {existing.Surname}",
+            PerformedBy = "System",
+            Details = $"Updated user account for {existing.Forename} {existing.Surname}"
+        });
+
         return true;
     }
 
-   
     public async Task<bool> DeleteAsync(long id)
     {
         var user = await _context.Users.FindAsync(id);
@@ -86,10 +108,23 @@ public class UserService : IUserService
             return false;
         }
 
+        // FIX → Add this
+        var fullName = $"{user.Forename} {user.Surname}";
+
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
 
+        await _activityLogService.AddAsync(new ActivityLog
+        {
+            Action = "User Deleted",
+            UserId = id,
+            UserName = fullName,
+            PerformedBy = "System",
+            Details = $"Deleted user account for {fullName}"
+        });
+
         return true;
     }
+
 }
 

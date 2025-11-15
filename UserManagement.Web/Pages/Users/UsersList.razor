@@ -1,23 +1,63 @@
 ﻿@page "/users"
 @inject NavigationManager Nav
 @inject IUserService UserService
+@inject IJSRuntime JS
 
-<h3>User List</h3>
+<h2 class="fw-bold mb-4">User Management</h2>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <select class="form-select w-auto d-inline"
-                @onchange="OnFilterChanged">
-            <option value="all">Show All</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-        </select>
+<!-- ===========================
+     TOP RIGHT TOOLBAR
+=========================== -->
+<!-- Search + Filter + Add User -->
+<!-- Search + Filter + Add User -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- Left: Search -->
+    <div class="flex-grow-1" style="max-width: 380px;">
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search text-muted"></i>
+            </span>
+            <input class="form-control border-start-0" placeholder="Search Users"
+                   @oninput="(e => SearchUsers(e.Value?.ToString()))" />
+        </div>
     </div>
 
-    <button class="btn btn-primary" @onclick="GoToCreate">
-        Add User
-    </button>
+    <!-- Right side buttons -->
+    <div class="d-flex align-items-center gap-3">
+
+        <!-- Filter Dropdown -->
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary d-flex align-items-center gap-2 px-3"
+                    data-bs-toggle="dropdown">
+                <i class="bi bi-funnel"></i>
+                @CurrentFilterLabel
+                <i class="bi bi-chevron-down small"></i>
+            </button>
+
+            <ul class="dropdown-menu">
+                <li><button class="dropdown-item" @onclick='() => SetFilter("all")'>All Users</button></li>
+                <li><button class="dropdown-item" @onclick='() => SetFilter("active")'>Active</button></li>
+                <li><button class="dropdown-item" @onclick='() => SetFilter("inactive")'>Inactive</button></li>
+            </ul>
+        </div>
+
+        <!-- Add User Button -->
+        <button class="btn btn-warning px-4 d-flex align-items-center gap-2"
+                data-bs-toggle="modal"
+                data-bs-target="#addUserModal">
+            <i class="bi bi-plus-lg"></i>
+            Add User
+        </button>
+
+    </div>
+
 </div>
+
+
+<!-- ===========================
+     USERS TABLE
+=========================== -->
 
 @if (filtered is null || filtered.Count == 0)
 {
@@ -25,73 +65,389 @@
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Forename</th>
-                <th>Surname</th>
-                <th>Email</th>
-                <th>Active</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var user in filtered)
-            {
-                <tr>
-                    <td>@user.Forename</td>
-                    <td>@user.Surname</td>
-                    <td>@user.Email</td>
-                    <td>@(user.IsActive ? "Yes" : "No")</td>
-                    <td>
-                        <button class="btn btn-sm btn-info"
-                                @onclick="() => GoToView(user.Id)">
-                            View
-                        </button>
-                        <button class="btn btn-sm btn-warning ms-1"
-                                @onclick="() => GoToEdit(user.Id)">
-                            Edit
-                        </button>
-                        <button class="btn btn-sm btn-danger ms-1"
-                                @onclick="() => GoToDelete(user.Id)">
-                            Delete
-                        </button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="bg-light">
+                    <tr style="height: 55px;">
+                        <th class="fw-semibold">Forename</th>
+                        <th class="fw-semibold">Surname</th>
+                        <th class="fw-semibold">Email</th>
+                        <th class="fw-semibold">Date Of Birth</th>
+                        <th class="fw-semibold">Status</th>
+                        <th class="fw-semibold text-center">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var user in filtered)
+                    {
+                        <tr style="height: 72px;">
+
+                            <td class="fw-semibold">@user.Forename</td>
+                            <td class="text-muted">@user.Surname</td>
+                            <td class="text-muted">@user.Email</td>
+
+                            <td class="text-muted">
+                                @user.DateOfBirth?.ToString("dd-MM-yyyy")
+                            </td>
+
+                            <td>
+                                @if (user.IsActive)
+                                {
+                                    <span class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-circle-fill text-success" style="font-size: 10px;"></i>
+                                        Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-circle-fill text-secondary" style="font-size: 10px;"></i>
+                                        Inactive
+                                    </span>
+                                }
+                            </td>
+
+                            <!-- ICON BUTTONS -->
+                            <td class="text-center">
+
+                                <button class="btn btn-link text-info p-0 me-3"
+                                        title="View"
+                                        @onclick="async () => await GoToView(user.Id)">
+                                    <i class="bi bi-eye fs-5"></i>
+                                </button>
+
+                                <button class="btn btn-link text-warning p-0 me-3"
+                                        title="Edit"
+                                        @onclick="async () => await GoToEdit(user.Id)">
+                                    <i class="bi bi-pencil fs-5"></i>
+                                </button>
+
+                                <button class="btn btn-link text-danger p-0"
+                                        title="Delete"
+                                        @onclick="@(() => GoToDelete(user.Id, $"{user.Forename} {user.Surname}"))">
+                                    <i class="bi bi-trash fs-5"></i>
+                                </button>
+
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 }
 
-@code {
-    private string filter = "all";
-    private List<User> all = new();
-    private List<User> filtered = new();
+<!-- ===========================
+     ADD USER MODAL POPUP
+=========================== -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content p-4 custom-modal">
 
-    protected override async Task OnInitializedAsync()
-    {
-        all = await UserService.GetAllAsync();
-        ApplyFilter();
-    }
+            <div class="modal-header border-0 d-block">
+                <h3 class="fw-bold mb-1">Add New User</h3>
+                <p class="text-muted mb-0">Enter the details of the new user below.</p>
 
-    private void OnFilterChanged(ChangeEventArgs e)
-    {
-        filter = e.Value?.ToString() ?? "all";
-        ApplyFilter();
-    }
+                <button type="button" class="btn-close position-absolute end-0 top-0 m-3"
+                        data-bs-dismiss="modal"></button>
+            </div>
 
-    private void ApplyFilter()
-    {
-        filtered = filter switch
-        {
-            "active"   => all.Where(u => u.IsActive).ToList(),
-            "inactive" => all.Where(u => !u.IsActive).ToList(),
-            _          => all.ToList()
-        };
-    }
+            <EditForm Model="@newUser" OnValidSubmit="@SaveNewUser" novalidate>
+                <DataAnnotationsValidator />
 
-    private void GoToCreate() => Nav.NavigateTo("/users/create");
-    private void GoToView(long id) => Nav.NavigateTo($"/users/view/{id}");
-    private void GoToEdit(long id) => Nav.NavigateTo($"/users/edit/{id}");
-    private void GoToDelete(long id) => Nav.NavigateTo($"/users/delete/{id}");
+                <div class="modal-body">
+
+                    <!-- FORENAME -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Forename <span class="text-danger">*</span>
+                        </label>
+                        <input class="form-control custom-input"
+                               placeholder="Enter first name"
+                               @bind="newUser.Forename" />
+                        <ValidationMessage For="@(() => newUser.Forename)" class="text-danger" />
+                    </div>
+
+                    <!-- SURNAME -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Surname <span class="text-danger">*</span>
+                        </label>
+                        <input class="form-control custom-input"
+                               placeholder="Enter surname"
+                               @bind="newUser.Surname" />
+                        <ValidationMessage For="@(() => newUser.Surname)" class="text-danger" />
+                    </div>
+
+                    <!-- EMAIL -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Email <span class="text-danger">*</span>
+                        </label>
+                        <input type="email"
+                               class="form-control custom-input"
+                               placeholder="example@gmail.com"
+                               @bind="newUser.Email" />
+                        <ValidationMessage For="@(() => newUser.Email)" class="text-danger" />
+                    </div>
+
+                    <!-- DOB (Optional but validated!) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Date of Birth</label>
+                        <input type="date"
+                               class="form-control custom-input"
+                               @bind="newUser.DateOfBirth"
+                               max="@MaxDob" />
+                        <ValidationMessage For="@(() => newUser.DateOfBirth)" class="text-danger" />
+                    </div>
+
+                    <!-- ACTIVE -->
+                    <div class="form-check mt-2">
+                        <input class="form-check-input custom-checkbox"
+                               type="checkbox"
+                               @bind="newUser.IsActive" />
+                        <label class="form-check-label fw-semibold">Active</label>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Add User
+                    </button>
+                </div>
+
+
+            </EditForm>
+
+        </div>
+    </div>
+</div>
+
+<!-- ===========================
+     Delete USER MODAL POPUP
+=========================== -->
+@if (showDeleteModal)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-3" style="border-radius:10px">
+                <div class="modal-header">
+                    <h5 class="modal-title">Are you sure?</h5>
+                </div>
+
+                <div class="modal-body">
+                    <p>
+                        Are you sure you want to delete
+                        <strong>@selectedUserName</strong>?
+                    </p>
+                    <p class="mb-0">
+                        This action cannot be undone. This will permanently delete the user account.
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
+
+@if (showViewModal && selectedUser != null)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content p-4 custom-modal">
+
+                <!-- Header -->
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="fw-bold mb-1">User Details</h4>
+                        <p class="text-muted mb-0">Complete information about the user.</p>
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            @onclick="() => showViewModal = false">
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+
+                    <div class="p-4 rounded-4 shadow-sm" style="background-color:#f8fafc;">
+
+                        <!-- Avatar + name + email -->
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width:64px;height:64px;background-color:#e0f7f9;
+                                            font-weight:600;font-size:1.5rem;">
+                                @GetInitials(selectedUser)
+                            </div>
+
+                            <div>
+                                <h5 class="fw-semibold mb-1">
+                                    @selectedUser.Forename @selectedUser.Surname
+                                </h5>
+                                <div class="text-muted">@selectedUser.Email</div>
+                            </div>
+                        </div>
+
+                        <!-- User ID + Status -->
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <div class="text-muted small text-uppercase fw-semibold">User ID</div>
+                                <div>@selectedUser.Id</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-muted small text-uppercase fw-semibold">Status</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-circle-fill"
+                                       style="font-size:0.6rem;
+                                                  color:@(selectedUser.IsActive ? "#198754" : "#6c757d")"></i>
+                                    <span class="@(selectedUser.IsActive ? "text-success" : "text-secondary")">
+                                        @(selectedUser.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DOB + Active (again, but as details) -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <div class="text-muted small text-uppercase fw-semibold">Date of Birth</div>
+                                <div>@selectedUser.DateOfBirth?.ToString("dd-MM-yyyy")</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-muted small text-uppercase fw-semibold">Active</div>
+                                <div class="@(selectedUser.IsActive ? "text-success" : "text-secondary")">
+                                    @(selectedUser.IsActive ? "Yes" : "No")
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Footer: ONLY Close button -->
+                <div class="modal-footer border-0 pt-3">
+                    <button class="btn btn-outline-secondary"
+                            @onclick="() => showViewModal = false">
+                        Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@if (showEditModal && editModel != null)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content p-4 custom-modal">
+
+                <!-- Header -->
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="fw-bold mb-1">Edit User</h4>
+                        <p class="text-muted mb-0">Update the user information below.</p>
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            @onclick="() => showEditModal = false">
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <EditForm Model="@editModel" OnValidSubmit="@SaveEditedUser">
+                    <DataAnnotationsValidator />
+
+                    <div class="modal-body">
+
+                        <!-- NAME -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Forename</label>
+                            <InputText class="form-control custom-input"
+                                       @bind-Value="editModel.Forename" />
+                            <ValidationMessage For="@(() => editModel.Forename)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Surname</label>
+                            <InputText class="form-control custom-input"
+                                       @bind-Value="editModel.Surname" />
+                            <ValidationMessage For="@(() => editModel.Surname)" />
+                        </div>
+
+                        <!-- EMAIL -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <InputText class="form-control custom-input"
+                                       @bind-Value="editModel.Email" />
+                            <ValidationMessage For="@(() => editModel.Email)" />
+                        </div>
+
+                        <!-- DOB -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date of Birth</label>
+                            <InputDate class="form-control custom-input"
+                                       @bind-Value="editModel.DateOfBirth" />
+                            <ValidationMessage For="@(() => editModel.DateOfBirth)" />
+                        </div>
+
+                        <!-- ACTIVE -->
+                        <div class="form-check mb-3">
+                            <InputCheckbox class="form-check-input custom-checkbox"
+                                           @bind-Value="editModel.IsActive" />
+                            <label class="form-check-label fw-semibold">
+                                Active
+                            </label>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer border-0">
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                @onclick="() => showEditModal = false">
+                            Cancel
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            Update User
+                        </button>
+                    </div>
+                </EditForm>
+
+            </div>
+        </div>
+    </div>
+}
+
+
+
+

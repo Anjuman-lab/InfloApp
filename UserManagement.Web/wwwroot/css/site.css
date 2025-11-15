@@ -77,3 +77,56 @@ html, body {
     background-color: #f5f6f8;
     overflow-y: auto;
 }
+
+/* Modal rounded and shadow */
+.custom-modal {
+    border-radius: 14px;
+    box-shadow: 0 8px 26px rgba(0,0,0,0.15);
+}
+
+/* Input styling */
+.custom-input {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #d9d9d9;
+    transition: all 0.2s ease;
+}
+
+    .custom-input:focus {
+        border-color: #009688 !important;
+        box-shadow: 0 0 0 4px rgba(0, 150, 136, 0.2) !important;
+    }
+
+/* Buttons */
+.custom-cancel-btn {
+    background: #E8F8F6;
+    color: #00796B;
+    border-radius: 10px;
+    padding: 8px 18px;
+    border: none;
+    transition: 0.2s;
+}
+
+    .custom-cancel-btn:hover {
+        background: #d5f2ef;
+    }
+
+.custom-add-btn {
+    background: #009688;
+    border: none;
+    padding: 8px 22px;
+    color: white;
+    border-radius: 10px;
+    transition: 0.2s;
+}
+
+    .custom-add-btn:hover {
+        background: #00796b;
+    }
+
+/* Checkbox */
+.custom-checkbox:checked {
+    background-color: #009688 !important;
+    border-color: #009688 !important;
+}
+
