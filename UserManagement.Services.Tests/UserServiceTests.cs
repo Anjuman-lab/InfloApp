@@ -1,8 +1,11 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using UserManagement.Models;
 using UserManagement.Services.Domain.Implementations;
+using UserManagement.Services.Domain.Interfaces;
+
 
 namespace UserManagement.Data.Tests
 {
@@ -11,16 +14,22 @@ namespace UserManagement.Data.Tests
     {
         private DataContext _context = null!;
         private UserService _service = null!;
+        private Mock<IActivityLogService> _activityLogMock = null!;
 
         [SetUp]
         public void Setup()
         {
             var options = new DbContextOptionsBuilder<DataContext>()
-                .UseInMemoryDatabase($"TestDb_{System.Guid.NewGuid()}")
-                .Options;
+               .UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}")
+               .Options;
 
             _context = new DataContext(options);
-            _service = new UserService(_context);
+
+            // Mock the activity log service
+            _activityLogMock = new Mock<IActivityLogService>();
+
+            // Pass the mock into the service
+            _service = new UserService(_context, _activityLogMock.Object);
         }
 
         // ------------------------------------------------------

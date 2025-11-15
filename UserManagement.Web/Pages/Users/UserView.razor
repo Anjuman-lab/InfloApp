@@ -1,8 +1,9 @@
 ﻿@page "/users/view/{Id:long}"
 @inject IUserService UserService
+@inject IActivityLogService ActivityLogService
 @inject NavigationManager Nav
 
-<h3>User Details</h3>
+<h3 class="fw-bold mb-4">User Details</h3>
 
 @if (user == null)
 {
@@ -10,35 +11,90 @@
 }
 else
 {
-    <dl class="row">
-        <dt class="col-sm-3">Forename</dt>
-        <dd class="col-sm-9">@user.Forename</dd>
+    <div class="row g-4">
+        <!-- LEFT: user details -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 p-3">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Forename</dt>
+                    <dd class="col-sm-8">@user.Forename</dd>
 
-        <dt class="col-sm-3">Surname</dt>
-        <dd class="col-sm-9">@user.Surname</dd>
+                    <dt class="col-sm-4">Surname</dt>
+                    <dd class="col-sm-8">@user.Surname</dd>
 
-        <dt class="col-sm-3">Email</dt>
-        <dd class="col-sm-9">@user.Email</dd>
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">@user.Email</dd>
 
-        <dt class="col-sm-3">Active</dt>
-        <dd class="col-sm-9">@user.IsActive</dd>
+                    <dt class="col-sm-4">Active</dt>
+                    <dd class="col-sm-8">@((user.IsActive) ? "Yes" : "No")</dd>
 
-        <dt class="col-sm-3">Date of Birth</dt>
-        <dd class="col-sm-9">@user.DateOfBirth?.ToShortDateString()</dd>
-    </dl>
+                    <dt class="col-sm-4">Date of Birth</dt>
+                    <dd class="col-sm-8">@user.DateOfBirth?.ToString("yyyy-MM-dd") ?? "N/A"</dd>
+                </dl>
+            </div>
+        </div>
 
-    <button class="btn btn-secondary" @onclick="@(() => Nav.NavigateTo("/users"))">Back</button>
+        <!-- RIGHT: activity logs for this user -->
+        <div class="col-md-6">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">Activity Logs</h5>
+                <span class="badge bg-light text-muted border">
+                    @userLogs.Count log@(userLogs.Count == 1 ? "" : "s")
+                </span>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                @if (isLoadingLogs)
+                {
+                    <div class="p-3 text-muted">Loading logs...</div>
+                }
+                else if (!userLogs.Any())
+                {
+                    <div class="p-3 text-muted">No activity has been recorded for this user yet.</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var log in userLogs)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <div class="small text-muted">
+                                            @log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")
+                                        </div>
+                                        <div class="fw-semibold">@log.Action</div>
+                                        <div class="small text-muted text-truncate" style="max-width: 360px;">
+                                            @log.Details
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
 }
 
 @code {
     [Parameter] public long Id { get; set; }
 
     private User? user;
+    private List<ActivityLog> userLogs = new();
+    private bool isLoadingLogs = true;
 
     protected override async Task OnInitializedAsync()
     {
         user = await UserService.GetByIdAsync(Id);
         if (user == null)
+        {
             Nav.NavigateTo("/users");
+            return;
+        }
+
+        userLogs = await ActivityLogService.GetByUserAsync(Id);
+        isLoadingLogs = false;
     }
 }
