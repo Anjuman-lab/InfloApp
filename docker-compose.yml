@@ -1,0 +1,30 @@
+
+services:
+  sqlserver:
+    build:
+      context: ./sqlserver
+      dockerfile: Dockerfile
+    container_name: sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webapp
+    depends_on:
+      - sqlserver
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=UserManagement;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+
+volumes:
+  sql_data:
