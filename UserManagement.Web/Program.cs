@@ -50,9 +50,10 @@ app.UseAuthorization();
 app.UseMarkdown();
 
 // Endpoints
+app.MapRazorPages();
 app.MapControllers();
-app.MapRazorPages();      
-app.MapBlazorHub();       
+app.MapBlazorHub();
+
 app.MapFallbackToPage("/_Host"); // ⬅ fallback to Blazor at root
 
 using (var scope = app.Services.CreateScope())
