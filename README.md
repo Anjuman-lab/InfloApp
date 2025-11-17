@@ -1,6 +1,9 @@
 # Confluence Page :
 [https://anjumanpatwekar.atlassian.net/wiki/spaces/InfloDocum/pages/22216705/User+Management+System+Documentation]
 
+# Note
+If you cannot access the Confluence page mentioned above, you can refer to the full documentation under Documentation.ZIP folder.
+
 # User Management Technical Exercise
 
 The exercise is an ASP.NET Core web application backed by Entity Framework Core, which faciliates management of some fictional users.
