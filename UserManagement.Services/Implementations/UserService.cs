@@ -62,7 +62,7 @@ public class UserService : IUserService
             Action = "User Created",
             UserId = user.Id,
             UserName = $"{user.Forename} {user.Surname}",
-            PerformedBy = "System", // later you could plug in real username
+            PerformedBy = "System", 
             Details = $"Created user account for {user.Forename} {user.Surname}"
         });
 
